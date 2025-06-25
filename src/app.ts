@@ -22,10 +22,28 @@ app.use(
 // CORS configuration
 app.use(
   cors({
-    origin: config.cors.origin,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (config.nodeEnv === 'production') {
+        if (
+          origin.startsWith('https://') ||
+          config.cors.origin.includes(origin)
+        ) {
+          return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+      }
+
+      if (config.cors.origin.includes(origin)) {
+        return callback(null, true);
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: config.cors.credentials,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: '*',
+    allowedHeaders: '*',
   }),
 );
 
